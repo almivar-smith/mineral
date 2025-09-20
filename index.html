@@ -2,419 +2,87 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Flota Minera - EVE Online — Versión 1.4</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    :root{
-      --bg:#0b0b0b; --card:#161616; --muted:#9aa; --accent:#0ff; --green:#4fe08a;
-      --border:#2b2b2b; --table-head:#222; --warning:#ff9a3c;
-    }
-    html,body{height:100%;margin:0;background:var(--bg);color:#eee;font-family:Inter,system-ui,Arial;padding:18px;}
-    h1{color:var(--accent);margin:0 0 8px 0}
-    p{margin:6px 0 14px 0;color:var(--muted)}
-    textarea{width:100%;height:160px;background:#111;color:#b7ffb7;border:1px solid var(--border);padding:10px;border-radius:6px;box-sizing:border-box;resize:vertical}
-    button{background:var(--accent);border:none;color:#000;padding:8px 12px;border-radius:6px;font-weight:700;cursor:pointer;margin-top:10px}
-    .player-card{background:var(--card);border:1px solid var(--border);padding:12px;border-radius:8px;margin-bottom:18px}
-    .player-card h3{margin:0 0 8px 0;color:#b7ffb7}
-    .time-info{color:var(--muted);font-size:13px;margin-bottom:8px}
-    table{width:100%;border-collapse:collapse;margin:8px 0 10px 0;background:transparent}
-    th,td{border:1px solid var(--border);padding:8px;text-align:left;font-size:14px}
-    th{background:var(--table-head);color:var(--accent);font-weight:600}
-    .jita-price{color:var(--green);font-style:italic;margin-left:6px;font-weight:700}
-    .estimated { color: var(--warning); font-weight:700; }
-    .mineral-list{list-style:none;padding:0;margin:0}
-    .mineral-list li{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.02)}
-    .mineral-list img{width:28px;height:28px;object-fit:contain;border-radius:4px}
-    .summary-top{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
-    .summary-top div{background:#0d0d0d;padding:8px;border-radius:6px;border:1px solid var(--border);font-size:13px;color:var(--muted)}
-    .member-list{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
-    .member-item{background:#0d0d0d;padding:6px;border-radius:6px;border:1px solid var(--border);font-size:13px;color:var(--muted)}
-    input[type="number"]{background:#0d0d0d;border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;width:110px}
-    @media (max-width:640px){
-      th,td{font-size:13px} .time-info{font-size:12px}
-    }
-    code{background:#0b0b0b;padding:2px 6px;border-radius:4px;color:#9ff}
-    label.inline{display:inline-flex;align-items:center;gap:8px;margin-left:6px;color:var(--muted)}
-  </style>
+  <title>Escaneo de Belt - EVE Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="belt-style.css" />
 </head>
 <body>
-  <h1>🚀 Flota Minera - EVE Online (Versión 1.4)</h1>
-  <p>Pega los registros del loot (ejemplo): <code>12:34:56 PilotoOne has looted 1,234 x Foggy Ueganite</code></p>
+  <div class="app" role="main">
+    <header>
+      <h1>Escaneo de Belt — EVE Online</h1>
+      <div class="small" id="appVersion">v1.3 rev2 (20/09/2025)</div>
+    </header>
 
-  <textarea id="inputData" placeholder="Pega los logs aquí..."></textarea>
+    <div class="cols">
+      <div class="left">
+        <h3>Pega tu escaneo</h3>
+        <div class="scan-area">
+          <label class="visually-hidden" for="scanInput">Pegar escaneo</label>
+          <textarea id="scanInput" placeholder="Pega el dscan aquí. Ctrl+Enter para procesar"></textarea>
+        </div>
 
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
-    <button id="procesarBtn">Procesar</button>
-    <button id="limpiarBtn" style="background:#444;color:#fff">Limpiar</button>
-    <button id="ejemploBtn" style="background:#222;color:#fff">Cargar ejemplo</button>
-    <button id="fetchJitaBtn" style="background:#1e90ff;color:#fff">Obtener precios Jita actualizados</button>
-    <label class="inline"><input type="checkbox" id="anonimizarChk" checked> Anonimizar nombres personales</label>
-  </div>
+        <div class="centerButton">
+          <button class="primary" id="runBtn">🔄 Procesar</button>
+          <button class="primary" id="clearBtn">🧹 Limpiar</button>
+        </div>
 
-  <div id="jitaPricesContainer" style="margin-top:12px"></div>
+        <div class="controls-row">
+          <label for="profileSelect" class="small">Perfil minado</label>
+          <select id="profileSelect">
+            <option value="Hulk_T1_Ore">Hulk - Strip Miner I (Ore)</option>
+            <option value="Hulk_T2_Ice">Hulk - Ice Harvester II (Ice)</option>
+            <option value="Default">Default</option>
+          </select>
+          <div style="margin-left:auto" class="small">Atajo: Ctrl+Enter</div>
+        </div>
 
-  <section id="controls" style="margin-top:14px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap">
-      <div>
-        <strong>Selecciona miembros de la flota para mostrar</strong>
-        <div id="memberSelector" class="member-list" style="margin-top:8px"></div>
+        <section class="cycle-controls">
+          <h4>Parámetros globales (valores por defecto)</h4>
+          <div class="controls-row">
+            <label class="small" for="globalModules">Módulos por nave</label>
+            <input id="globalModules" type="number" min="1" value="2" />
+            <label class="small" for="globalM3PerCycle" style="margin-left:12px">m³ por ciclo (por módulo)</label>
+            <input id="globalM3PerCycle" type="number" step="0.1" value="1800" />
+            <label class="small" for="globalCycleSec" style="margin-left:12px">Tiempo ciclo (s)</label>
+            <input id="globalCycleSec" type="number" min="1" value="50" />
+          </div>
+          <div class="small muted" style="margin-top:8px">
+            Nota: estos valores son sugeridos; cada piloto tiene sus propios campos editables abajo.
+          </div>
+        </section>
+
+        <section class="pilot-controls">
+          <h4>Pilotos</h4>
+
+          <div class="pilot-titles">
+            <div class="col name">Piloto</div>
+            <div class="col modules">Módulos</div>
+            <div class="col m3">m³/ciclo</div>
+            <div class="col cycle">Ciclo s</div>
+            <div class="col rate">Rate (m³/min)</div>
+            <div class="col actions">Acciones</div>
+          </div>
+
+          <div id="pilotList"></div>
+
+          <div class="controls-row" style="margin-top:10px">
+            <button class="btn-ghost" id="applyDefaultsBtn">Aplicar valores globales a pilotos sin valor</button>
+            <div style="margin-left:auto" class="small">Total rendimiento: <span id="totalRate">—</span> m³/min</div>
+          </div>
+        </section>
       </div>
 
-      <div style="min-width:280px">
-        <strong>Totales por mineral (editable)</strong>
-        <div id="globalTotalsContainer" style="margin-top:8px"></div>
+      <div class="right">
+        <div id="resultsContainer" class="results-box"></div>
       </div>
     </div>
-  </section>
 
-  <div id="fichasContainer" style="margin-top:18px"></div>
+    <footer class="footer">
+      <div class="small">Herramienta local · v1.3 rev2 (20/09/2025)</div>
+    </footer>
+  </div>
 
-  <script>
-    /***** CONFIG *****/
-    const personalNamesToRedact = ["Almivar"]; // edit here
-    const personalAliasFixed = "Piloto 0";
-
-    /***** DATA TABLES *****/
-    const baseMineralIDs = {"Veldspar":1230,"Scordite":1228,"Pyroxeres":1224,"Plagioclase":18,"Omber":1227,"Kernite":20,"Jaspet":1226,"Hemorphite":1231,"Hedbergite":21,"Dark Ochre":1232,"Gneiss":1229,"Crokite":1225,"Bistot":1223,"Arkonor":22,"Mercoxit":11396,"Spodumain":19,"Ueganite":45490,"Ducinium":45491,"Eifyrium":45492,"Mordunium":45493,"Bezdnacine":45494,"Blue Ice":16262,"Clear Icicle":16264,"Glacial Mass":16265,"White Glaze":16263,"Dark Glitter":17976,"Gelidus":17977,"Krystallos":17978,"Fullerite-C50":30375,"Fullerite-C60":30376,"Mykoserocin":25268,"Cytoserocin":25266};
-    const variantTypeIDs = {"foggy ueganite":82206};
-    const preciosJitaFallback = {"Veldspar":10,"Scordite":23,"Pyroxeres":57,"Plagioclase":41,"Omber":421,"Kernite":810,"Jaspet":1231,"Hemorphite":1231,"Hedbergite":2100,"Dark Ochre":3500,"Gneiss":3061,"Crokite":8860,"Bistot":5640,"Arkonor":6500,"Mercoxit":28900,"Spodumain":1900,"Ueganite":4549,"Ducinium":4549,"Eifyrium":4549,"Mordunium":4549,"Bezdnacine":4549,"Blue Ice":800,"Clear Icicle":800,"Glacial Mass":800,"White Glaze":800,"Dark Glitter":1200,"Gelidus":1200,"Krystallos":1200,"Fullerite-C50":1500,"Fullerite-C60":1800,"Mykoserocin":900,"Cytoserocin":950};
-    const preciosMineralesBase = {"Tritanium":3.18,"Pyerite":28.7,"Mexallon":73.5,"Isogen":330,"Nocxium":1040,"Zydrine":1680,"Megacyte":3700,"Morphite":24000};
-    const reprocessYieldsPerUnit = {"Veldspar":{"Tritanium":0.4},"Scordite":{"Tritanium":0.15,"Pyerite":0.09},"Pyroxeres":{"Pyerite":0.09,"Mexallon":0.03},"Plagioclase":{"Tritanium":0.175,"Isogen":0.07},"Omber":{"Tritanium":0.6,"Isogen":0.075},"Kernite":{"Mexallon":0.6,"Isogen":0.12},"Jaspet":{"Mexallon":0.75,"Isogen":0.25},"Hemorphite":{"Isogen":0.8,"Nocxium":0.3},"Hedbergite":{"Pyerite":0.45,"Isogen":0.12},"Dark Ochre":{"Mexallon":1.36,"Isogen":1.2,"Zydrine":0.32},"Gneiss":{"Pyerite":2.0,"Mexallon":1.5,"Zydrine":0.8},"Crokite":{"Pyerite":0.8,"Mexallon":2.0,"Zydrine":0.8},"Bistot":{"Mexallon":3.2,"Zydrine":1.2,"Megacyte":0.16},"Arkonor":{"Mexallon":3.2,"Zydrine":1.2,"Megacyte":0.12},"Mercoxit":{"Morphite":1.4}};
-
-    /***** HELPERS *****/
-    function normalizeName(s){ return String(s||'').trim().toLowerCase(); }
-    function redactPersonalNames(rawText){
-      if(!rawText) return rawText; let out = String(rawText);
-      if(!Array.isArray(personalNamesToRedact) || personalNamesToRedact.length===0) return out;
-      for(const pn of personalNamesToRedact){ if(!pn) continue; const esc = pn.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&'); const re=new RegExp(esc,'ig'); out = out.replace(re, personalAliasFixed); }
-      return out;
-    }
-    const _aliasMap = {}; let _nextAliasIndex = 1;
-    function makeAliasFor(name){ if(_aliasMap[name]) return _aliasMap[name]; const alias = `Piloto ${_nextAliasIndex++}`; _aliasMap[name]=alias; return alias; }
-    function getDisplayedName(realName){ const anonim = document.getElementById('anonimizarChk')?.checked; if(!anonim) return realName; return makeAliasFor(realName); }
-    function getBaseMineralFromMaps(name){ if(!name) return null; const keys = Object.keys(baseMineralIDs).sort((a,b)=>b.length-a.length); const low=normalizeName(name); for(const k of keys) if(low.includes(k.toLowerCase())) return k; return null; }
-    function getTypeIdForMineral(name){ const n=normalizeName(name); if(variantTypeIDs[n]) return variantTypeIDs[n]; const base = getBaseMineralFromMaps(name); if(base) return baseMineralIDs[base]; return null; }
-    function getMineralImageURL(name){ const t = getTypeIdForMineral(name); if(!t) return null; return `https://images.evetech.net/types/${t}/icon?size=64`; }
-    function getPrecioUnitarioLocal(name){ const base = getBaseMineralFromMaps(name); return (base && preciosJitaFallback[base])?preciosJitaFallback[base]:0; }
-    function parseCantidad(numStr){ if(!numStr) return 0; if(numStr.includes(',') && numStr.includes('.')) return parseFloat(numStr.replace(/\./g,'').replace(',','.'))||0; if(numStr.includes(',') && !numStr.includes('.')) return parseFloat(numStr.replace(/,/g,''))||0; return parseFloat(numStr)||0; }
-    function timeToSeconds(h){ const p=String(h).split(':').map(n=>parseInt(n,10)); if(p.length!==3) return NaN; return p[0]*3600+p[1]*60+p[2]; }
-    function formatDuration(sec){ if(isNaN(sec)||sec<0) return '0 min 0 seg'; const hh=Math.floor(sec/3600); sec%=3600; const mm=Math.floor(sec/60); const ss=sec%60; if(hh>0) return `${hh} h ${mm} min ${ss} seg`; return `${mm} min ${ss} seg`; }
-    function isCompressedName(name){ return normalizeName(name).includes('compressed'); }
-
-    /***** ESTIMATION *****/
-    function estimateValueByReprocess(name,cantidad){
-      if(!name) return {iskTotal:0,breakdown:{}}; const factor = isCompressedName(name)?100:1; const base = getBaseMineralFromMaps(name); if(!base) return {iskTotal:0,breakdown:{}}; const yields = reprocessYieldsPerUnit[base]; if(!yields) return {iskTotal:0,breakdown:{}}; const totalUnits = cantidad*factor; let iskTotal=0; const breakdown={}; for(const [min,perUnitQty] of Object.entries(yields)){ const qty = perUnitQty*totalUnits; const unitPrice = preciosMineralesBase[min]||0; const isk = qty*unitPrice; breakdown[min]={qty,unitPrice,isk}; iskTotal += isk; } return {iskTotal,breakdown}; }
-
-    /***** PARSE & RENDER CORE
-          - window._rawPlayers: original parsed (no aliases), structure: {player:{inicio,fin,total,mineralMap}}
-          - window._priceOverrides: map name->price (editable via UI)
-    *****/
-    window._rawPlayers = null;
-    window._priceOverrides = {}; // mineralName -> price
-
-    function procesarDesdeRaw(rawInput){
-      const raw = String(rawInput||'').trim();
-      const out = document.getElementById('fichasContainer'); out.innerHTML=''; if(!raw){ out.innerHTML='<p style="color:#cfc">Pega los logs antes de procesar.</p>'; return null; }
-      const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
-      const players = {}; const globalMinerals={}; const allTimes=[];
-
-      for(const line of lines){
-        const r = line.match(/^(\d{2}:\d{2}:\d{2})\s+(.+?)\s+has looted\s+([\d\.,]+)\s+x\s+(.+)$/i);
-        if(!r) continue;
-        const [,hora,jugadorRaw,cantStr,mineralRaw] = r;
-        const jugador = jugadorRaw.trim(); const mineral = mineralRaw.trim(); const cantidad = parseCantidad(cantStr);
-        allTimes.push(hora);
-        if(!players[jugador]) players[jugador] = {inicio:hora,fin:hora,total:0,totalISK:0,minerales:{}};
-        if(timeToSeconds(hora) < timeToSeconds(players[jugador].inicio)) players[jugador].inicio = hora;
-        if(timeToSeconds(hora) > timeToSeconds(players[jugador].fin)) players[jugador].fin = hora;
-        players[jugador].total += cantidad;
-        // precio local initial (fallback)
-        let unit = getPrecioUnitarioLocal(mineral);
-        let iskTotal = unit*cantidad; let usedEstimation=false;
-        if(!unit || unit===0){
-          const est = estimateValueByReprocess(mineral,cantidad);
-          if(est.iskTotal>0){ iskTotal = est.iskTotal; unit = (cantidad>0)?(iskTotal/cantidad):0; usedEstimation=true; } else { iskTotal=0; unit=0; }
-        }
-        players[jugador].totalISK += iskTotal;
-        if(!players[jugador].minerales[mineral]) players[jugador].minerales[mineral] = {cantidad:0,isk:0,unit:unit,estimated:usedEstimation};
-        players[jugador].minerales[mineral].cantidad += cantidad;
-        players[jugador].minerales[mineral].isk += iskTotal;
-        players[jugador].minerales[mineral].unit = unit;
-        players[jugador].minerales[mineral].estimated = players[jugador].minerales[mineral].estimated || usedEstimation;
-        // global
-        if(!globalMinerals[mineral]) globalMinerals[mineral] = {cantidad:0,isk:0,unit:unit,estimated:usedEstimation};
-        globalMinerals[mineral].cantidad += cantidad;
-        globalMinerals[mineral].isk += iskTotal;
-        globalMinerals[mineral].unit = unit;
-        globalMinerals[mineral].estimated = globalMinerals[mineral].estimated || usedEstimation;
-      }
-
-      if(Object.keys(players).length === 0){ out.innerHTML='<p style="color:#fbb">No se han detectado líneas válidas. Revisa el formato.</p>'; return null; }
-
-      window._rawPlayers = players; // store original parsed players
-      window._lastPlayers = buildAnonPlayers(players); // initial anon view
-      window._priceOverrides = {}; // reset overrides
-      renderAll();
-      return window._lastPlayers;
-    }
-
-    function buildAnonPlayers(players){
-      // returns players object keyed by display name according to checkbox state
-      const exportPlayers = {};
-      _nextAliasIndex = 1; // reset alias sequence for consistent display
-      for(const [realName,data] of Object.entries(players)){
-        const key = document.getElementById('anonimizarChk')?.checked ? makeAliasFor(realName) : realName;
-        exportPlayers[key] = structuredClone(data);
-      }
-      return exportPlayers;
-    }
-
-    /***** RENDERING that depends on current price overrides and visible members *****/
-    function computeAggregatesForVisibleMembers(){
-      // returns {globalMinerals, playersToRender}
-      const players = window._rawPlayers || {};
-      const visible = getVisibleMemberRealNames(); // array of real names to include
-      const playersToRender = {};
-      const global = {};
-      for(const realName of visible){
-        const data = players[realName];
-        if(!data) continue;
-        playersToRender[realName] = structuredClone(data); // copy
-        // recompute per-mineral ISK using overrides if present
-        let totalISK = 0;
-        for(const [min,info] of Object.entries(playersToRender[realName].minerales)){
-          const override = window._priceOverrides[min];
-          const unit = (override!==undefined && override!==null) ? Number(override) : getPrecioUnitarioLocal(min);
-          const isk = unit * info.cantidad;
-          playersToRender[realName].minerales[min].unit = unit;
-          playersToRender[realName].minerales[min].isk = isk;
-          totalISK += isk;
-          // global accumulate
-          if(!global[min]) global[min] = {cantidad:0,isk:0,unit:unit,source:(override? 'override' : 'local')};
-          global[min].cantidad += info.cantidad;
-          global[min].isk += isk;
-          global[min].unit = unit;
-        }
-        playersToRender[realName].totalISK = totalISK;
-      }
-      return {global,playersToRender};
-    }
-
-    function renderMemberSelector(){
-      const container = document.getElementById('memberSelector'); container.innerHTML='';
-      const players = window._rawPlayers || {};
-      const list = Object.keys(players).sort((a,b)=>a.localeCompare(b));
-      for(const realName of list){
-        const checkbox = document.createElement('label'); checkbox.className='member-item';
-        const input = document.createElement('input'); input.type='checkbox'; input.checked = true; input.style.marginRight='6px';
-        input.dataset.real = realName;
-        input.addEventListener('change', ()=>{ renderAll(); });
-        checkbox.appendChild(input);
-        const display = document.createElement('span'); display.textContent = getDisplayedName(realName);
-        checkbox.appendChild(display);
-        container.appendChild(checkbox);
-      }
-    }
-
-    function getVisibleMemberRealNames(){
-      const players = window._rawPlayers || {};
-      const inputs = Array.from(document.querySelectorAll('#memberSelector input[type="checkbox"]'));
-      const visible = [];
-      if(inputs.length===0){
-        // default: everyone
-        return Object.keys(players);
-      }
-      for(const inp of inputs){
-        if(inp.checked) visible.push(inp.dataset.real);
-      }
-      return visible;
-    }
-
-    function renderGlobalTotalsTable(global){
-      const container = document.getElementById('globalTotalsContainer'); container.innerHTML='';
-      const table = document.createElement('table');
-      table.innerHTML = '<thead><tr><th>Mineral</th><th>Cantidad</th><th>Precio unitario editable</th><th>Total ISK</th></tr></thead>';
-      const tbody = document.createElement('tbody');
-      Object.entries(global).sort((a,b)=>b[1].cantidad - a[1].cantidad).forEach(([min,info])=>{
-        const tr = document.createElement('tr');
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.step = '1';
-        input.min = '0';
-        input.value = (window._priceOverrides[min]!==undefined && window._priceOverrides[min]!==null) ? window._priceOverrides[min] : info.unit || 0;
-        input.addEventListener('change', (e)=>{
-          const val = Number(e.target.value) || 0;
-          window._priceOverrides[min] = val;
-          // re-render everything using new overrides
-          renderAll();
-        });
-        const estMark = (info.source === 'override' || (window._priceOverrides[min]!==undefined)) ? '' : '';
-        tr.innerHTML = `<td>${min}</td><td>${Number(info.cantidad).toLocaleString()}</td><td></td><td>${Math.round(info.isk).toLocaleString()} ISK</td>`;
-        const tdInput = tr.children[2];
-        tdInput.appendChild(input);
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      container.appendChild(table);
-    }
-
-    function renderPlayerCards(playersToRender){
-      const out = document.getElementById('fichasContainer'); out.innerHTML='';
-      // playersToRender keyed by realName
-      for(const [realName,datos] of Object.entries(playersToRender).sort((a,b)=>a[0].localeCompare(b[0]))){
-        const displayName = getDisplayedName(realName);
-        const card = document.createElement('div'); card.className='player-card';
-        const dur = formatDuration(timeToSeconds(datos.fin)-timeToSeconds(datos.inicio));
-        card.innerHTML = `<h3>👤 ${displayName}</h3>
-          <div class="time-info"><strong>Inicio:</strong> ${datos.inicio} &nbsp; <strong>Fin:</strong> ${datos.fin} &nbsp; <strong>Duración:</strong> ${dur}</div>
-          <div class="summary-top"><div><strong>Total unidades:</strong><br>${Number(datos.total).toLocaleString()}</div><div><strong>Valor estimado:</strong><br>${Math.round(datos.totalISK).toLocaleString()} ISK</div></div>`;
-        const t = document.createElement('table');
-        t.innerHTML = '<thead><tr><th>Mineral</th><th>Cantidad</th><th>Precio unitario</th><th>Total ISK</th></tr></thead>';
-        const tb = document.createElement('tbody');
-        Object.entries(datos.minerales).sort((a,b)=>b[1].cantidad-a[1].cantidad).forEach(([min,info])=>{
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${min}</td><td>${Number(info.cantidad).toLocaleString()}</td><td>${info.unit?Number(info.unit).toLocaleString() + ' ISK':'—'}</td><td>${Math.round(info.isk).toLocaleString()} ISK</td>`;
-          tb.appendChild(tr);
-        });
-        t.appendChild(tb); card.appendChild(t);
-        const ul = document.createElement('ul'); ul.className='mineral-list';
-        Object.entries(datos.minerales).sort((a,b)=>b[1].cantidad-a[1].cantidad).forEach(([min,info])=>{
-          const li = document.createElement('li');
-          const imgUrl = getMineralImageURL(min);
-          const imgHtml = imgUrl ? `<img src="${imgUrl}" alt="${min}">` : `<div style="width:28px;height:28px;background:#222;border-radius:4px"></div>`;
-          li.innerHTML = `${imgHtml}<div style="flex:1"><strong>${min}</strong><div style="color:var(--muted);font-size:13px">${Number(info.cantidad).toLocaleString()} unidades — <span style="color:var(--green);font-weight:700">${Math.round(info.isk).toLocaleString()} ISK</span></div></div>`;
-          ul.appendChild(li);
-        });
-        card.appendChild(ul);
-        out.appendChild(card);
-      }
-    }
-
-    function renderAll(){
-      // If no raw players, nothing to do
-      if(!window._rawPlayers) return;
-      // Ensure member selector exists
-      renderMemberSelectorIfNeeded();
-      // Recompute aggregates for currently visible members
-      const {global, playersToRender} = computeAggregatesForVisibleMembers();
-      // Render global totals with editable price cells
-      // Add source flags: if price override exists, mark input background slightly
-      // But inputs are built inside renderGlobalTotalsTable
-      // Ensure global items include source marker for override detection
-      for(const min of Object.keys(global)){
-        if(window._priceOverrides[min]!==undefined && window._priceOverrides[min]!==null){
-          global[min].unit = Number(window._priceOverrides[min]);
-          global[min].isk = global[min].unit * global[min].cantidad;
-          global[min].source = 'override';
-        } else {
-          global[min].source = 'local';
-        }
-      }
-      renderGlobalTotalsTable(global);
-      // Render player cards for visible members
-      renderPlayerCards(playersToRender);
-      // expose anonymized players for external uses
-      window._lastPlayers = buildAnonPlayers(playersToRender);
-    }
-
-    function renderMemberSelectorIfNeeded(){
-      const container = document.getElementById('memberSelector');
-      if(!container) return;
-      if(Object.keys(container.children).length>0) return; // already rendered
-      renderMemberSelector();
-    }
-
-    /***** ESI PRICES & UI HOOKS *****/
-    async function fetchTypeIdByName(name){
-      const tid = getTypeIdForMineral(name);
-      if(tid) return tid;
-      try{
-        const q = encodeURIComponent(name);
-        const res = await fetch(`https://esi.evetech.net/latest/search/?categories=inventory_type&strict=false&language=en&search=${q}`);
-        if(!res.ok) return null;
-        const data = await res.json();
-        if(data.inventory_type && data.inventory_type.length>0) return data.inventory_type[0];
-      }catch(e){ return null; }
-      return null;
-    }
-
-    async function fetchJitaPriceForType(typeId){
-      try{
-        const url = `https://esi.evetech.net/latest/markets/10000002/orders/?type_id=${typeId}&datasource=tranquility`;
-        const res = await fetch(url);
-        if(!res.ok) return null;
-        const orders = await res.json();
-        const sells = orders.filter(o=>o.is_buy_order===false).map(o=>o.price).sort((a,b)=>a-b);
-        if(sells.length===0) return null;
-        const mid = sells.length%2===1 ? sells[(sells.length-1)/2] : (sells[sells.length/2-1]+sells[sells.length/2])/2;
-        return mid;
-      }catch(e){ return null; }
-    }
-
-    async function fetchJitaPricesAndApply(){
-      const container = document.getElementById('jitaPricesContainer'); container.innerHTML = '<div style="color:#9ff">Obteniendo precios Jita... espera</div>';
-      if(!window._rawPlayers){ container.innerHTML = '<div style="color:#f88">Procesa los logs primero.</div>'; return; }
-      // collect used minerals from raw players (not filtered by visibility)
-      const used = new Set();
-      Object.values(window._rawPlayers).forEach(p=> Object.keys(p.minerales||{}).forEach(m=>used.add(m)));
-      const results = {};
-      for(const name of Array.from(used)){
-        const typeId = await fetchTypeIdByName(name);
-        let price = null; let source = 'fallback';
-        if(typeId) price = await fetchJitaPriceForType(typeId);
-        if(price===null){
-          const base = getBaseMineralFromMaps(name);
-          price = (base && preciosJitaFallback[base]) ? preciosJitaFallback[base] : 0;
-          source = 'fallback';
-        } else { source = 'jita'; }
-        results[name] = {price,source,typeId};
-        // apply fetched price as override so global table updates
-        window._priceOverrides[name] = price;
-      }
-      renderJitaPriceTable(results);
-      renderAll(); // update totals and player cards using overrides
-    }
-
-    function renderJitaPriceTable(priceMap){
-      const container = document.getElementById('jitaPricesContainer'); container.innerHTML='';
-      const table = document.createElement('table'); table.style.width='100%'; table.style.borderCollapse='collapse';
-      table.innerHTML = `<thead><tr><th>Mineral</th><th>Type ID</th><th>Precio Jita</th><th>Fuente</th></tr></thead>`;
-      const tbody = document.createElement('tbody');
-      Object.entries(priceMap).forEach(([min,info])=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td style="padding:6px;border:1px solid var(--border)">${min}</td>
-                        <td style="padding:6px;border:1px solid var(--border)">${info.typeId||'-'}</td>
-                        <td style="padding:6px;border:1px solid var(--border)">${Number(info.price).toLocaleString()} ISK</td>
-                        <td style="padding:6px;border:1px solid var(--border)">${info.source}</td>`;
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      container.appendChild(table);
-    }
-
-    /***** UI EVENTS *****/
-    document.getElementById('procesarBtn').addEventListener('click', ()=>{ const raw = redactPersonalNames(document.getElementById('inputData').value||''); procesarDesdeRaw(raw); });
-    document.getElementById('limpiarBtn').addEventListener('click', ()=>{ document.getElementById('inputData').value=''; document.getElementById('fichasContainer').innerHTML=''; document.getElementById('jitaPricesContainer').innerHTML=''; document.getElementById('globalTotalsContainer').innerHTML=''; document.getElementById('memberSelector').innerHTML=''; window._rawPlayers=null; window._priceOverrides={}; for(const k of Object.keys(_aliasMap)) delete _aliasMap[k]; _nextAliasIndex=1; });
-    document.getElementById('ejemploBtn').addEventListener('click', ()=>{ document.getElementById('inputData').value =
-`12:10:05 Alice has looted 1,234 x Veldspar
-12:12:10 Bob has looted 2,000 x Foggy Ueganite
-12:15:30 Alice has looted 3,500 x Pyroxeres
-12:20:01 Charlie has looted 800 x Hemorphite
-12:25:45 Bob has looted 1,000 x Hemorphite
-12:33:10 Alice has looted 500 x Veldspar`; });
-
-    document.getElementById('fetchJitaBtn').addEventListener('click', ()=>{ fetchJitaPricesAndApply(); });
-
-    // When anonimizar checkbox toggled, rebuild alias map and re-render
-    document.getElementById('anonimizarChk').addEventListener('change', ()=>{ if(window._rawPlayers) { _nextAliasIndex=1; for(const k of Object.keys(_aliasMap)) delete _aliasMap[k]; renderAll(); } });
-
-    // helper structuredClone fallback for older browsers
-    if(typeof structuredClone === 'undefined'){
-      window.structuredClone = function(obj){ return JSON.parse(JSON.stringify(obj)); };
-    }
-
-    // initial focus
-    document.getElementById('inputData').focus();
-  </script>
+  <script src="belt-config.js"></script>
+  <script src="belts-app.js"></script>
 </body>
 </html>
